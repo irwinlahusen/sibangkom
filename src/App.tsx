@@ -3,72 +3,64 @@ import { CheckCircle2, CircleDashed, ListChecks, RefreshCw } from 'lucide-react'
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwk-rOVHXrdUH5ZflSZ2yvrzqanERA84DDG8OaTD77bTx2P1OXGvyP1-E6q4wypzAI3/exec"; 
 
-const fallbackData: Record<string, any[]> = {
-  "Morowali": [
-    { name: "Memuat Data...", tasks: [null, null, null, null] }
-  ]
-};
-
 const taskLabels = ["Perencanaan", "Pendaftaran", "Izin", "Sertifikat"];
 
 export default function App() {
-  const [dataByRegion, setDataByRegion] = useState<Record<string, any[]>>({});
+  const [dataByRegion, setDataByRegion] = useState({});
   const [currentIdx, setCurrentIdx] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isWaiting, setIsWaiting] = useState(false); // Status tambahan untuk stabilitas
+  const scrollRef = useRef(null);
 
   const fetchData = async () => {
     try {
       const res = await fetch(SCRIPT_URL);
       const data = await res.json();
-      if (data) {
-        setDataByRegion(data);
-        setLoading(false);
-        setIsRefreshing(false);
-      }
-    } catch (err) {
-      console.error("Gagal ambil data:", err);
-      setDataByRegion(fallbackData);
+      if (data) setDataByRegion(data);
       setLoading(false);
-      setIsRefreshing(false);
+    } catch (err) {
+      console.error("Gagal memuat:", err);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
-    // Auto-refresh setiap 5 menit
-    const timer = setInterval(() => {
-      setIsRefreshing(true);
-      fetchData();
-    }, 300000);
+    const timer = setInterval(fetchData, 300000); // Update data tiap 5 menit
     return () => clearInterval(timer);
   }, []);
 
   const regions = Object.keys(dataByRegion);
 
-  const nextSlide = () => {
-    setCurrentIdx((prev) => (prev + 1) % regions.length);
-    if (scrollRef.current) scrollRef.current.scrollTop = 0;
-  };
-
   useEffect(() => {
-    if (regions.length === 0) return;
-    const interval = setInterval(() => {
-      if (scrollRef.current) {
-        const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-        // Jika sudah sampai bawah, tunggu 5 detik sebelum ganti slide
-        if (scrollTop + clientHeight >= scrollHeight - 5) {
-          setTimeout(nextSlide, 5000); 
-        } else {
-          scrollRef.current.scrollTop += 1;
-        }
+    if (regions.length === 0 || isWaiting) return;
+
+    const scrollInterval = setInterval(() => {
+      const el = scrollRef.current;
+      if (!el) return;
+
+      // Logika scroll
+      if (el.scrollTop + el.clientHeight < el.scrollHeight - 5) {
+        el.scrollTop += 1; // Kecepatan scroll
+      } else {
+        // Sampai di bawah: Ganti slide
+        setIsWaiting(true); // Kunci agar tidak scroll lagi
+        
+        // Durasi diam: 3 detik minimal + 0.5 detik per item data
+        const waitTime = 3000 + ((dataByRegion[regions[currentIdx]]?.length || 0) * 500);
+        
+        setTimeout(() => {
+          el.scrollTop = 0; // Reset scroll ke atas
+          setCurrentIdx((prev) => (prev + 1) % regions.length);
+          setIsWaiting(false); // Lepas kunci
+        }, waitTime);
       }
     }, 50);
-    return () => clearInterval(interval);
-  }, [currentIdx, regions]);
 
-  if (loading) return <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">Memuat Data SiBangkom...</div>;
+    return () => clearInterval(scrollInterval);
+  }, [currentIdx, regions, dataByRegion, isWaiting]);
+
+  if (loading) return <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">Memuat Data...</div>;
 
   const currentRegion = regions[currentIdx];
   const batches = dataByRegion[currentRegion] || [];
@@ -78,24 +70,20 @@ export default function App() {
       <div className="relative w-full max-w-4xl bg-slate-900 rounded-3xl overflow-hidden border border-slate-700 shadow-2xl">
         <div className="bg-slate-800 p-6 border-b border-slate-700 flex justify-between items-center">
           <div>
-            <h2 className="text-sm text-blue-400 font-bold uppercase tracking-widest flex items-center gap-2">
-              SiBangkom 2026 {isRefreshing && <RefreshCw size={14} className="animate-spin" />}
-            </h2>
+            <h2 className="text-sm text-blue-400 font-bold uppercase tracking-widest">SiBangkom 2026</h2>
             <h1 className="text-3xl font-black">KABUPATEN {currentRegion?.toUpperCase()}</h1>
           </div>
-          <div className="text-blue-500 font-mono text-sm">
-            Slide {currentIdx + 1} dari {regions.length}
-          </div>
+          <div className="text-blue-500 font-mono text-sm">Slide {currentIdx + 1} / {regions.length}</div>
         </div>
         <div ref={scrollRef} className="h-[500px] overflow-y-auto p-6 space-y-6">
-          {batches.map((batch: any, bIdx: number) => (
+          {batches.map((batch, bIdx) => (
             <div key={bIdx} className="bg-slate-800/50 p-5 rounded-2xl border border-slate-700">
               <h3 className="font-bold text-lg mb-4 text-blue-200 flex items-center gap-2">
                 <ListChecks size={20} />
                 {batch.name}
               </h3>
               <div className="grid grid-cols-2 gap-3">
-                {batch.tasks.map((status: any, tIdx: number) => {
+                {batch.tasks.map((status, tIdx) => {
                   const isSelesai = status === "Selesai" || status === true || status === 1;
                   return (
                     <div key={tIdx} className={`p-3 rounded-lg flex items-center gap-3 ${isSelesai ? 'bg-emerald-900/30' : 'bg-slate-700/50'}`}>
