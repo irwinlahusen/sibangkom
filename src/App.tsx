@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle2, CircleDashed, ListChecks } from 'lucide-react';
+import { CheckCircle2, CircleDashed, ListChecks, RefreshCw } from 'lucide-react';
 
-const SCRIPT_URL = ""; 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwk-rOVHXrdUH5ZflSZ2yvrzqanERA84DDG8OaTD77bTx2P1OXGvyP1-E6q4wypzAI3/exec"; 
 
 const fallbackData: Record<string, any[]> = {
   "Morowali": [
-    { name: "LATSAR CPNS MOROWALI Angkatan XXVII", tasks: ["Selesai", "Selesai", "Selesai", "Selesai"] }
+    { name: "Memuat Data...", tasks: [null, null, null, null] }
   ]
 };
 
@@ -15,25 +15,34 @@ export default function App() {
   const [dataByRegion, setDataByRegion] = useState<Record<string, any[]>>({});
   const [currentIdx, setCurrentIdx] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!SCRIPT_URL || SCRIPT_URL === "") {
+  const fetchData = async () => {
+    try {
+      const res = await fetch(SCRIPT_URL);
+      const data = await res.json();
+      if (data) {
+        setDataByRegion(data);
+        setLoading(false);
+        setIsRefreshing(false);
+      }
+    } catch (err) {
+      console.error("Gagal ambil data:", err);
       setDataByRegion(fallbackData);
       setLoading(false);
-      return;
+      setIsRefreshing(false);
     }
+  };
 
-    fetch(SCRIPT_URL)
-      .then(res => res.json())
-      .then(data => {
-        setDataByRegion(data || fallbackData);
-        setLoading(false);
-      })
-      .catch(() => {
-        setDataByRegion(fallbackData);
-        setLoading(false);
-      });
+  useEffect(() => {
+    fetchData();
+    // Auto-refresh setiap 5 menit
+    const timer = setInterval(() => {
+      setIsRefreshing(true);
+      fetchData();
+    }, 300000);
+    return () => clearInterval(timer);
   }, []);
 
   const regions = Object.keys(dataByRegion);
@@ -48,8 +57,9 @@ export default function App() {
     const interval = setInterval(() => {
       if (scrollRef.current) {
         const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+        // Jika sudah sampai bawah, tunggu 5 detik sebelum ganti slide
         if (scrollTop + clientHeight >= scrollHeight - 5) {
-          setTimeout(nextSlide, 2000); 
+          setTimeout(nextSlide, 5000); 
         } else {
           scrollRef.current.scrollTop += 1;
         }
@@ -58,7 +68,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, [currentIdx, regions]);
 
-  if (loading) return <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">Memuat...</div>;
+  if (loading) return <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">Memuat Data SiBangkom...</div>;
 
   const currentRegion = regions[currentIdx];
   const batches = dataByRegion[currentRegion] || [];
@@ -66,9 +76,16 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-white">
       <div className="relative w-full max-w-4xl bg-slate-900 rounded-3xl overflow-hidden border border-slate-700 shadow-2xl">
-        <div className="bg-slate-800 p-6 border-b border-slate-700">
-          <h2 className="text-sm text-blue-400 font-bold uppercase tracking-widest">Wilayah Kerja</h2>
-          <h1 className="text-3xl font-black">KABUPATEN {currentRegion?.toUpperCase()}</h1>
+        <div className="bg-slate-800 p-6 border-b border-slate-700 flex justify-between items-center">
+          <div>
+            <h2 className="text-sm text-blue-400 font-bold uppercase tracking-widest flex items-center gap-2">
+              SiBangkom 2026 {isRefreshing && <RefreshCw size={14} className="animate-spin" />}
+            </h2>
+            <h1 className="text-3xl font-black">KABUPATEN {currentRegion?.toUpperCase()}</h1>
+          </div>
+          <div className="text-blue-500 font-mono text-sm">
+            Slide {currentIdx + 1} dari {regions.length}
+          </div>
         </div>
         <div ref={scrollRef} className="h-[500px] overflow-y-auto p-6 space-y-6">
           {batches.map((batch: any, bIdx: number) => (
