@@ -3,7 +3,6 @@ import { CheckCircle2, CircleDashed, ListChecks } from 'lucide-react';
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwk-rOVHXrdUH5ZflSZ2yvrzqanERA84DDG8OaTD77bTx2P1OXGvyP1-E6q4wypzAI3/exec"; 
 
-
 const taskLabels = ["Perencanaan", "Pendaftaran", "Izin", "Sertifikat"];
 
 export default function App() {
@@ -67,10 +66,15 @@ export default function App() {
       <div className="relative w-full max-w-4xl bg-slate-900 rounded-3xl overflow-hidden border border-slate-700 shadow-2xl">
         <div className="bg-slate-800 p-6 border-b border-slate-700 flex justify-between items-center">
           <div>
-            <h2 className="text-sm text-blue-400 font-bold uppercase tracking-widest">SiBangkom 2026</h2>
-            <h1 className="text-3xl font-black">KABUPATEN {currentRegion?.toUpperCase()}</h1>
+            <h2 className="text-xs text-blue-400 font-bold uppercase tracking-[0.2em] mb-1">SiBangkom 2026</h2>
+            {/* Judul Kabupaten diubah menjadi putih mencolok */}
+            <h1 className="text-4xl font-extrabold text-white tracking-tight">
+              KABUPATEN {currentRegion?.toUpperCase()}
+            </h1>
           </div>
-          <div className="text-blue-500 font-mono text-sm">Slide {currentIdx + 1} / {regions.length}</div>
+          <div className="text-blue-500 font-mono text-sm bg-slate-950 px-3 py-1 rounded-full border border-slate-700">
+            Slide {currentIdx + 1} / {regions.length}
+          </div>
         </div>
         <div ref={scrollRef} className="h-[500px] overflow-y-auto p-6 space-y-6">
           {batches.map((batch, bIdx) => (
