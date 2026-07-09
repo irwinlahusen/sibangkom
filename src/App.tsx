@@ -3,6 +3,7 @@ import { CheckCircle2, CircleDashed, ListChecks } from 'lucide-react';
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwk-rOVHXrdUH5ZflSZ2yvrzqanERA84DDG8OaTD77bTx2P1OXGvyP1-E6q4wypzAI3/exec"; 
 
+
 const taskLabels = ["Perencanaan", "Pendaftaran", "Izin", "Sertifikat"];
 
 export default function App() {
