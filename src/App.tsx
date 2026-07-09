@@ -27,7 +27,7 @@ export default function App() {
 
   useEffect(() => {
     fetchData();
-    const timer = setInterval(fetchData, 300000);
+    const timer = setInterval(fetchData, 180000);
     return () => clearInterval(timer);
   }, []);
 
