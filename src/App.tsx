@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle2, CircleDashed, ListChecks, RefreshCw } from 'lucide-react';
+import { CheckCircle2, CircleDashed, ListChecks } from 'lucide-react';
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwk-rOVHXrdUH5ZflSZ2yvrzqanERA84DDG8OaTD77bTx2P1OXGvyP1-E6q4wypzAI3/exec"; 
 
@@ -9,12 +9,12 @@ export default function App() {
   const [dataByRegion, setDataByRegion] = useState({});
   const [currentIdx, setCurrentIdx] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [isWaiting, setIsWaiting] = useState(false); // Status tambahan untuk stabilitas
+  const [isWaiting, setIsWaiting] = useState(false);
   const scrollRef = useRef(null);
 
   const fetchData = async () => {
     try {
-      const res = await fetch(SCRIPT_URL);
+      const res = await fetch(SCRIPT_URL + "?t=" + new Date().getTime());
       const data = await res.json();
       if (data) setDataByRegion(data);
       setLoading(false);
@@ -26,7 +26,7 @@ export default function App() {
 
   useEffect(() => {
     fetchData();
-    const timer = setInterval(fetchData, 300000); // Update data tiap 5 menit
+    const timer = setInterval(fetchData, 300000);
     return () => clearInterval(timer);
   }, []);
 
@@ -39,20 +39,16 @@ export default function App() {
       const el = scrollRef.current;
       if (!el) return;
 
-      // Logika scroll
       if (el.scrollTop + el.clientHeight < el.scrollHeight - 5) {
-        el.scrollTop += 1; // Kecepatan scroll
+        el.scrollTop += 1;
       } else {
-        // Sampai di bawah: Ganti slide
-        setIsWaiting(true); // Kunci agar tidak scroll lagi
-        
-        // Durasi diam: 3 detik minimal + 0.5 detik per item data
+        setIsWaiting(true);
         const waitTime = 3000 + ((dataByRegion[regions[currentIdx]]?.length || 0) * 500);
         
         setTimeout(() => {
-          el.scrollTop = 0; // Reset scroll ke atas
+          el.scrollTop = 0;
           setCurrentIdx((prev) => (prev + 1) % regions.length);
-          setIsWaiting(false); // Lepas kunci
+          setIsWaiting(false);
         }, waitTime);
       }
     }, 50);
