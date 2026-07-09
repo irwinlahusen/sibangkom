@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle2, CircleDashed, ListChecks } from 'lucide-react';
 
-const SCRIPT_URL = "https://script.google.com/macros/library/d/138S2uJMHQjPvshES_WpLS1XTl_c9VltWHZHpjus6Al_msaCiYksJnRTE/4"; 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwk-rOVHXrdUH5ZflSZ2yvrzqanERA84DDG8OaTD77bTx2P1OXGvyP1-E6q4wypzAI3/exec"; 
 
 const taskLabels = ["Perencanaan", "Pendaftaran", "Izin", "Sertifikat"];
 
